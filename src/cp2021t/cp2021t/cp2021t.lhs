@@ -1053,7 +1053,13 @@ gopt a= g_eval_exp a
 \begin{code}
 sd_gen :: Floating a =>
     Either () (Either a (Either (BinOp, ((ExpAr a, ExpAr a), (ExpAr a, ExpAr a))) (UnOp, (ExpAr a, ExpAr a)))) -> (ExpAr a, ExpAr a)
-sd_gen = undefined
+sd_gen (Left ()) = (X,N 1)
+sd_gen (Right (Left n)) = (N n,N 0)
+sd_gen (Right (Right (Left (Sum,((e1,d1),(e2,d2)))))) = (Bin Sum e1 e2,Bin Sum d1 d2)
+sd_gen (Right (Right (Left (Product,((e1,d1),(e2,d2)))))) = (Bin Product e1 e2, Bin Sum (Bin Product e1 d2) (Bin Product d1 e2))
+sd_gen (Right (Right (Right (Negate,(e1,d1))))) = (Un Negate e1,Un Negate d1)
+sd_gen (Right (Right (Right (E,(e1,d1))))) = (Un E e1,Bin Product (Un E e1) d1)
+
 \end{code}
 
 \begin{code}
