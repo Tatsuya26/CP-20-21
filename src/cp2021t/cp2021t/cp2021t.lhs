@@ -198,6 +198,7 @@ import Cp
 import List hiding (fac)
 import Nat
 import LTree
+import BTree
 import Data.List hiding (find)
 import Test.QuickCheck hiding ((><),choose,collect)
 import qualified Test.QuickCheck as QuickCheck
@@ -1021,16 +1022,32 @@ Definir:
 outExpAr :: ExpAr a -> Either () (Either a (Either (BinOp, (ExpAr a, ExpAr a)) (UnOp, ExpAr a)))
 outExpAr X = i1 ()
 outExpAr (N a) = i2 (i1 a)
-outExpAr (Bin op exp1 exp2) = i2 (i2 (i1 (op, (exp1, exp2))))
-outExpAr (Un op exp) = i2 (i2 (curry i2 op exp))
+outExpAr (Bin op (exp1) (exp2) ) = i2 (i2 (i1 (op, (exp1, exp2 ))))
+outExpAr (Un op (exp)) = i2 (i2 (curry i2 op exp))
 ---
-recExpAr = undefined
+recExpAr f = baseExpAr id id id f f id f
 ---
-g_eval_exp = undefined
+g_eval_exp a (Left ()) = a
+g_eval_exp _ (Right (Left n)) = n
+g_eval_exp _ (Right (Right (Left (Sum,(e,d))))) = e+d
+g_eval_exp _ (Right (Right (Left (Product,(e,d))))) = e*d
+g_eval_exp _ (Right (Right (Right (Negate,n)))) = n * (-1)
+g_eval_exp _ (Right (Right (Right (E,n)))) = (Prelude.exp n)
 ---
-clean = undefined
+clean X = i1 ()
+clean (N a) = i2 (i1 a)
+clean (Bin Sum (exp1) (exp2)) 
+    |exp1 == (N 0) = clean exp2
+    |exp2 == (N 0) = clean exp1
+clean (Bin Product (exp1) (exp2))
+    |exp1 == (N 0) || exp2 == (N 0) = i2 (i1 0)
+    |exp1 == (N 1) = clean exp2
+    |exp2 == (N 1) = clean exp1
+clean (Un E exp)
+    |exp == (N 0) = i2 (i1 1)
+clean exp = outExpAr exp
 ---
-gopt = undefined 
+gopt a= g_eval_exp a
 \end{code}
 
 \begin{code}
