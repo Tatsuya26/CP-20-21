@@ -702,6 +702,7 @@ Verifique as suas funções testando a propriedade seguinte:
 A média de uma lista não vazia e de uma \LTree\ com os mesmos elementos coincide,
 a menos de um erro de 0.1 milésimas:
 \begin{code}
+prop_avg :: [Double] -> Property
 prop_avg = nonempty .==>. diff .<=. const 0.000001 where
    diff l = avg l - (avgLTree . genLTree) l
    genLTree = anaLTree lsplit
@@ -1017,7 +1018,11 @@ ad v = p2 . cataExpAr (ad_gen v)
 Definir:
 
 \begin{code}
-outExpAr = undefined 
+outExpAr :: ExpAr a -> Either () (Either a (Either (BinOp, (ExpAr a, ExpAr a)) (UnOp, ExpAr a)))
+outExpAr X = i1 ()
+outExpAr (N a) = i2 (i1 a)
+outExpAr (Bin op exp1 exp2) = i2 (i2 (i1 (op, (exp1, exp2))))
+outExpAr (Un op exp) = i2 (i2 (curry i2 op exp))
 ---
 recExpAr = undefined
 ---
