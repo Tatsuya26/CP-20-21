@@ -129,13 +129,13 @@
 \begin{tabular}{ll}
 \textbf{Grupo} nr. & 999 (preencher)
 \\\hline
-a11111 & Nome1 (preencher)	
+a93274 & David Pereira Alves	
 \\
-a22222 & Nome2 (preencher)	
+a22222 & Ricardo Augusto Mota Gama
 \\
-a33333 & Nome3 (preencher)	
+a93228 & Rui Miguel Borges Braga
 \\
-a44444 & Nome4 (preencher, se aplicável, ou apagar)	
+a93261 & Tiago Lucas Alves
 \end{tabular}
 \end{center}
 
@@ -1024,13 +1024,23 @@ outExpAr (N a) = i2 (i1 a)
 outExpAr (Bin op exp1 exp2) = i2 (i2 (i1 (op, (exp1, exp2))))
 outExpAr (Un op exp) = i2 (i2 (curry i2 op exp))
 ---
-recExpAr = undefined
+recExpAr f = baseExpAr id id id f f id f
 ---
-g_eval_exp = undefined
+g_eval_exp :: Floating a => a -> Either () (Either a (Either (BinOp, (a, a)) (UnOp, a))) -> a
+g_eval_exp a (Left ()) = a
+g_evalexp  (Right (Left n)) = n
+g_evalexp  (Right (Right (Left (Sum,(e,d))))) = e+d
+g_evalexp  (Right (Right (Left (Product,(e,d))))) = e*d
+g_evalexp  (Right (Right (Right (Negate,n)))) = n * (-1)
+g_evalexp  (Right (Right (Right (E,n)))) = (Prelude.exp n)
 ---
-clean = undefined
+clean :: ExpAr a -> BTree ExpAr a ->
+clean x = Node x Empty Empty
+clean (N a) = Node (N a) Empty Empty
+clean (Bin Sum x e d)= Node  
 ---
-gopt = undefined 
+gopt :: 
+gopt = 
 \end{code}
 
 \begin{code}
