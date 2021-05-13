@@ -1027,12 +1027,11 @@ outExpAr (Un op (exp)) = i2 (i2 (curry i2 op exp))
 ---
 recExpAr f = baseExpAr id id id f f id f
 ---
-g_eval_exp a (Left ()) = a
-g_eval_exp _ (Right (Left n)) = n
-g_eval_exp _ (Right (Right (Left (Sum,(e,d))))) = e+d
-g_eval_exp _ (Right (Right (Left (Product,(e,d))))) = e*d
-g_eval_exp _ (Right (Right (Right (Negate,n)))) = n * (-1)
-g_eval_exp _ (Right (Right (Right (E,n)))) = (Prelude.exp n)
+g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
+          where binOp (Sum,(e,d)) = e+d
+                binOp (Product,(e,d)) = e*d
+                unOp  (Negate,n) =  n * (-1)
+                unOp  (E,n) = Prelude.exp n
 ---
 clean X = i1 ()
 clean (N a) = i2 (i1 a)
