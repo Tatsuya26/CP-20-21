@@ -1049,6 +1049,7 @@ gopt a = g_eval_exp a
 \end{code}
 
 \begin{code}
+sd_gen :: Floating a => Either () (Either a (Either (BinOp,((ExpAr a,ExpAr a),(ExpAr a,ExpAr a))) (UnOp,(ExpAr a,ExpAr a)))) -> (ExpAr a,ExpAr a)
 sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
   where handleX () = (X,N 1)
         handleN n = (N n,N 0)
