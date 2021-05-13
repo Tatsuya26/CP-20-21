@@ -1033,8 +1033,6 @@ g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
                 unOp  (Negate,n) =  n * (-1)
                 unOp  (E,n) = Prelude.exp n
 ---
-clean X = i1 ()
-clean (N a) = i2 (i1 a)
 clean (Bin Sum (exp1) (exp2)) 
     |exp1 == (N 0) = clean exp2
     |exp2 == (N 0) = clean exp1
@@ -1046,17 +1044,27 @@ clean (Un E exp)
     |exp == (N 0) = i2 (i1 1)
 clean exp = outExpAr exp
 ---
-gopt a= g_eval_exp a
+gopt a = g_eval_exp a
 \end{code}
 
 \begin{code}
-sd_gen :: Floating a =>
-    Either () (Either a (Either (BinOp, ((ExpAr a, ExpAr a), (ExpAr a, ExpAr a))) (UnOp, (ExpAr a, ExpAr a)))) -> (ExpAr a, ExpAr a)
-sd_gen = undefined
+sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
+  where handleX () = (X,N 1)
+        handleN n = (N n,N 0)
+        handleBin (Sum,((e1,d1),(e2,d2))) = (Bin Sum e1 e2,Bin Sum d1 d2)
+        handleBin (Product,((e1,d1),(e2,d2))) = (Bin Product e1 e2, Bin Sum (Bin Product e1 d2) (Bin Product d1 e2))
+        handleUn (Negate,(e1,d1)) = (Un Negate e1,Un Negate d1)
+        handleUn (E,(e1,d1)) = (Un E e1,Bin Product (Un E e1) d1)
 \end{code}
 
 \begin{code}
-ad_gen = undefined
+ad_gen a = either (handleX) (either (handleN) (either (handleBin a) (handleUn a)))
+  where handleX () = (X,1)
+        handleN = (split (N) (const 0)) 
+        handleBin a (Sum,((e1,d1),(e2,d2))) = (Bin Sum e1 e2,d1+d2)
+        handleBin a (Product,((e1,d1),(e2,d2))) = (Bin Product e1 e2,((eval_exp a e1)*d2) + ((eval_exp a e2)*d1))
+        handleUn a (Negate,(e1,d1)) = (Un Negate e1,negate d1) 
+        handleUn a (E,(e1,d1)) = (Un E e1,d1*(eval_exp a (Un E e1)))
 \end{code}
 
 \subsection*{Problema 2}
