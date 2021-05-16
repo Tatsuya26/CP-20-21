@@ -1,10 +1,10 @@
 
--- (c) MP-I (1998/9-2006/7) and CP (2005/6-2020/21)
+-- (c) MP-I (1998/9-2006/7) and CP (2005/6-2018/9)
 
 module List  where
 
 import Cp
-import Nat hiding (fac)
+import Nat
 
 -- (1) Datatype definition -----------------------------------------------------
 
@@ -16,17 +16,17 @@ inList = either nil cons
 outList []    = i1 ()
 outList (a:x) = i2(a,x)
 
-baseList g f = id -|- g >< f
-
 -- (2) Ana + cata + hylo -------------------------------------------------------
-
-recList  f   = id -|- id >< f                   -- this is F f for this data type
 
 cataList g   = g . recList (cataList g) . outList   
 
+recList  f   = id -|- id >< f                   -- this is F f for this data type
+
 anaList  g   = inList . recList (anaList g) . g
 
-hyloList f g = cataList f . anaList g
+hyloList h g = cataList h . anaList g
+
+baseList f g = id -|- f >< g
 
 -- (3) Map ---------------------------------------------------------------------
 -- NB: already in the Haskell Prelude
@@ -42,7 +42,7 @@ eval b = cataList (either zero (add.(id><(b*))))
 
 -- (4.2) inversion -------------------------------------------------------------
 
-reverse' = cataList (either nil snoc) where snoc(a,l) = l ++ [a]
+invl = cataList (either nil snoc) where snoc(a,l) = l ++ [a]
 
 -- alternatively: snoc = conc . swap . (singl >< id)
 --                       where singl a = [a]
@@ -50,12 +50,12 @@ reverse' = cataList (either nil snoc) where snoc(a,l) = l ++ [a]
 
 -- (4.3) Look-up function ------------------------------------------------------
 
-lookup :: Eq a => a -> [(a,b)] -> Maybe b
-lookup k = cataList (either nothing aux)
-           where nothing = const Nothing
-                 aux((a,b),r)
-                    | a == k    = Just b
-                    | otherwise = r
+look :: Eq a => a -> [(a,b)] -> Maybe b
+look k = cataList (either nothing aux)
+        where nothing = const Nothing
+              aux((a,b),r)
+                      | a == k    = Just b
+                      | otherwise = r
 
 -- (4.4) Insertion sort --------------------------------------------------------
 
@@ -69,9 +69,10 @@ iSort =  cataList (either nil insert)
 
 -- (4.5) take (cf GHC.List.take) -----------------------------------------------
 
-utake = anaList aux
+take' = curry (anaList aux)
          where aux(0,_) = i1()
                aux(_,[]) = i1()
+        ---    aux(n+1,x:xs) = i2(x,(n,xs))
                aux(n,x:xs) = i2(x,(n-1,xs))
 
 -- pointwise version:
@@ -81,10 +82,14 @@ utake = anaList aux
 
 -- (4.6) Factorial--------------------------------------------------------------
 
-fac :: Integer -> Integer
-fac = hyloList (either (const 1) mul) natg
+fac = hyloList algMul nats
 
-natg = (id -|- (split succ id)) . outNat
+-- where
+
+algMul = either (const 1) mul
+--mul = uncurry (*)
+
+nats = (id -|- (split succ id)) . outNat
 
 -- (4.6.1) Factorial (alternative) ---------------------------------------------
 
@@ -93,26 +98,13 @@ fac' = hyloList (either (const 1) (mul . (succ >< id)))
 
 {-- cf:
 
-fac' = hyloList (either (const 1) g) natg'
+fac' = hyloList (either (const 1) g) nats'
        where g(n,m) = (n+1) * m
-             natg' 0 = i1 ()
-             natg' (n+1) = i2 (n,n)
+             nats' 0 = i1 ()
+             nats' (n+1) = i2 (n,n)
 --}
 
 -- (4.7) Square function -------------------------------------------------------
-
-sq = hyloList summing oddd
-
-summing = either (const 0) add
-
-evens = anaList evend
-
-odds  = anaList oddd
-
-evend = (id -|- (split (2*) id)) . outNat
-
-oddd  = (id -|- (split odd id)) . outNat
-       where odd n = 2*n+1
 
 {-- pointwise:
 sq 0 = 0
@@ -121,9 +113,21 @@ sq (n+1) = 2*n+1 + sq n
 cf. Newton's binomial: (n+1)^2 = n^2 + 2n + 1
 --}
 
+sq = hyloList summing odds
+
+summing = either (const 0) add
+
+odds = (id -|- (split impar id)) . outNat
+       where impar n = 2*n+1
+
+{-- odds pointwise:
+odds 0 = i1 ()
+odds (n+1) = i2 (2*n+1,n)
+--}
+
 -- (4.7.1) Square function reusing anaList of factorial ----------------------------
 
-sq' = (cataList summing) . fmap (\n->2*n-1) . (anaList natg)
+sq' = (cataList summing) . fmap (\n->2*n-1) . (anaList nats)
 
 -- (4.8) Prefixes and suffixes -------------------------------------------------
 
@@ -140,12 +144,11 @@ diff x l = cataList (either nil (g l)) x
 
 -- (4.9) Grouping --------------------------------------------------------------
 
-chunksOf' :: Int -> [a] -> [[a]]
-chunksOf' n = anaList (g n) where
-          g 0 = i1 . (!)
-          g n = i2 . split (take n) (drop n)
-
-nest = chunksOf'
+--nest :: Int -> [a] -> [[a]]
+nest n = anaList (g n) where
+--         g n [] = i1()
+--         g n l = i2(take n l,drop n l)
+           g n = cond (==[]) (i1.(!)) (i2.(split (take n)(drop n)))
 
 -- (4.10) Relationship with foldr, foldl ----------------------------------------
 
