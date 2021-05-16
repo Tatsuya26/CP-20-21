@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -XNPlusKPatterns #-}
 
--- (c) MP-I (1998/9-2006/7) and CP (2005/6-2020/21)
+-- (c) MP-I (1998/9-2006/7) and CP (2005/6-2018/9)
 
 module Nat where
 
@@ -19,9 +19,9 @@ outNat (n+1) = i2 n
 
 -- (2) Ana + cata + hylo -------------------------------------------------------
 
-recNat f    = id -|- f                                 -- this is F f for this datatype
-
 cataNat g   = g . recNat (cataNat g) . outNat
+
+recNat f    = id -|- f                                 -- this is F f for this datatype
 
 anaNat h    = inNat . (recNat (anaNat h) ) . h
 
@@ -70,8 +70,8 @@ facfor = for (split (succ.p1) mul) (1,1)
 
 idiv :: Integer -> Integer -> Integer
 {-- pointwise
-x `idiv` y  |   x <  y    = 0
-            |   x >= y    = (x - y) `idiv` y + 1
+x `wdiv` y  |   x <  y    = 0
+            |   x >= y    = (x - y) `wdiv` y + 1
 --}
 
 idiv = flip aux
@@ -101,7 +101,7 @@ while p f = w where w =  (either id id) . (w -|- id) . (f -|- id) . (grd p)
 
 --- (5) Monadic for -------------------------------------
 
-mfor b i 0 = i
+mfor b i 0 = return i
 mfor b i (n+1) = do {x <- mfor b i n ; b x}
 
 --- end of Nat.hs ----------------------------------------

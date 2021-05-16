@@ -1,5 +1,5 @@
 
--- (c) MP-I (1998/9-2006/7) and CP (2005/6-2020/21)
+-- (c) MP-I (1998/9-2006/7) and CP (2005/6-2018/9)
 
 module Cp where
 
@@ -24,10 +24,6 @@ f >< g = split (f . p1) (g . p2)
 p1        = fst
 p2        = snd
 
--- diagonal
-
-diag = split id id
-
 -- (2) Coproduct ---------------------------------------------------------------
 
 -- Renamings:
@@ -43,10 +39,6 @@ f -|- g = either (i1 . f) (i2 . g)
 -- McCarthy's conditional:
 
 cond p f g = (either f g) . (grd p)
-
--- codiagonal
-
-codiag = either id id
 
 -- (3) Exponentiation ---------------------------------------------------------
 
@@ -117,12 +109,6 @@ distl = uncurry (either (curry i1)(curry i2))
 
 distr :: (b, Either c a) -> Either (b, c) (b, a)
 distr = (swap -|- swap) . distl . swap
-
-colambda :: (a, a) -> Bool -> a
-colambda (a,b) = f where f True = a; f False = b
-
-lambda :: (Bool -> a) -> (a, a)
-lambda f = (f False, f True)
 
 -- (6) Class bifunctor ---------------------------------------------------------
 
@@ -211,9 +197,6 @@ mul = uncurry (*)
 
 conc = uncurry (++)
 
-umax :: Ord a => (a,a) -> a
-umax = uncurry max
-
 true = const True
 
 nothing = const Nothing
@@ -222,8 +205,6 @@ false = const False
 
 inMaybe :: Either () a -> Maybe a
 inMaybe = either (const Nothing) Just
-
-nat0 = [0..] -- the natural numbers
 
 -- (9) Advanced ----------------------------------------------------------------
 

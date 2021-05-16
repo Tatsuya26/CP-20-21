@@ -129,13 +129,13 @@
 \begin{tabular}{ll}
 \textbf{Grupo} nr. & 999 (preencher)
 \\\hline
-a11111 & Nome1 (preencher)	
+a93274 & David Pereira Alves	
 \\
-a22222 & Nome2 (preencher)	
+a22222 & Ricardo Augusto Mota Gama
 \\
-a33333 & Nome3 (preencher)	
+a93228 & Rui Miguel Borges Braga
 \\
-a44444 & Nome4 (preencher, se aplicável, ou apagar)	
+a93261 & Tiago Lucas Alves
 \end{tabular}
 \end{center}
 
@@ -193,6 +193,7 @@ o ``kit'' básico, escrito em \Haskell, para realizar o trabalho. Basta executar
 \begin{code}
 {-# OPTIONS_GHC -XNPlusKPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable, FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Main where 
 import Cp
 import List hiding (fac)
@@ -1011,7 +1012,8 @@ optmize_eval :: (Floating a, Eq a) => a -> (ExpAr a) -> a
 optmize_eval a = hyloExpAr (gopt a) clean
 
 sd :: Floating a => ExpAr a -> ExpAr a
-sd = p2 . cataExpAr sd_gen
+--sd = p2 . cataExpAr sd_gen
+sd = undefined 
 
 ad :: Floating a => a -> ExpAr a -> a
 ad v = p2 . cataExpAr (ad_gen v)
@@ -1048,6 +1050,7 @@ gopt a = g_eval_exp a
 \end{code}
 
 \begin{code}
+sd_gen :: Floating a => Either () (Either a (Either (BinOp,((ExpAr a,ExpAr a),(ExpAr a,ExpAr a))) (UnOp,(ExpAr a,ExpAr a)))) -> (ExpAr a,ExpAr a)
 sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
   where handleX () = (X,N 1)
         handleN n = (N n,N 0)
@@ -1070,13 +1073,35 @@ ad_gen a = either (handleX) (either (handleN) (either (handleBin a) (handleUn a)
 \subsection*{Problema 2}
 Definir
 \begin{code}
-loop = undefined
-inic = undefined
-prj = undefined
+
 \end{code}
-por forma a que
+Definição de uma função geral f que vai ter o resultado do numero de catalan
+De seguida utilização da funçao h como caminho para defenir os factoriais do denominador e numerador
+Em h aplicar a divisão inteira(sem certeza se deve utilizar a função "div" mas "/" não resulta)
+Função numerador calcula a (2n)!
+Função Denominador calcula um fatorial normal e depois é aplicada em n e (n+1)
 \begin{code}
+
+f 0 = 1
+f (n+1) = f n + h n
+
+h 0 = 1
+h (n+1) = h n + (div (numerador n) ((denominador n) * denominador(n+1)))
+
+numerador 0 = 0
+numerador n = numerador_aux n + numerador (n - 1)
+              where
+              numerador_aux n = n + n
+
+denominador 0 = 0
+denominador n = n * denominador (n-1)
+
 cat = prj . (for loop inic)
+  where  
+  loop (f,h,numerador,denominador) = (f + h, h + (div (numerador) ((denominador) * denominador)),numerador,denominador)
+  inic = (1,1,1,1)
+  prj (f,h,numerador,denominador) = f
+
 \end{code}
 seja a função pretendida.
 \textbf{NB}: usar divisão inteira.
