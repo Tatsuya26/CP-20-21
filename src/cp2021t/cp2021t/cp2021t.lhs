@@ -193,6 +193,7 @@ o ``kit'' básico, escrito em \Haskell, para realizar o trabalho. Basta executar
 \begin{code}
 {-# OPTIONS_GHC -XNPlusKPatterns #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving, DeriveDataTypeable, FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 module Main where 
 import Cp
 import List hiding (fac)
@@ -1011,7 +1012,8 @@ optmize_eval :: (Floating a, Eq a) => a -> (ExpAr a) -> a
 optmize_eval a = hyloExpAr (gopt a) clean
 
 sd :: Floating a => ExpAr a -> ExpAr a
-sd = p2 . cataExpAr sd_gen
+--sd = p2 . cataExpAr sd_gen
+sd = undefined 
 
 ad :: Floating a => a -> ExpAr a -> a
 ad v = p2 . cataExpAr (ad_gen v)
@@ -1027,17 +1029,13 @@ outExpAr (Un op (exp)) = i2 (i2 (curry i2 op exp))
 ---
 recExpAr f = baseExpAr id id id f f id f
 ---
-
-g_eval_exp a exp = either (const a) (either (id) (either binOp) unOp) exp
-		where 
-		binOp(Sum (e,d)) = e + d
-		binOp(Product(e,d)) = e * d
-		unOp(Negate x)    = x * (-1)
-		unOp(E a)   = prelude.exp a
-
+g_eval_exp a (Left ()) = a
+g_eval_exp _ (Right (Left n)) = n
+g_eval_exp _ (Right (Right (Left (Sum,(e,d))))) = e+d
+g_eval_exp _ (Right (Right (Left (Product,(e,d))))) = e*d
+g_eval_exp _ (Right (Right (Right (Negate,n)))) = n * (-1)
+g_eval_exp _ (Right (Right (Right (E,n)))) = (expd n)
 ---
-clean X = i1 ()
-clean (N a) = i2 (i1 a)
 clean (Bin Sum (exp1) (exp2)) 
     |exp1 == (N 0) = clean exp2
     |exp2 == (N 0) = clean exp1
@@ -1050,29 +1048,60 @@ clean (Un E exp)
 clean exp = outExpAr exp
 ---
 gopt a = g_eval_exp a
-
 \end{code}
 
 \begin{code}
-sd_gen :: Floating a =>
-    Either () (Either a (Either (BinOp, ((ExpAr a, ExpAr a), (ExpAr a, ExpAr a))) (UnOp, (ExpAr a, ExpAr a)))) -> (ExpAr a, ExpAr a)
-sd_gen = undefined
+sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
+  where handleX () = (X,N 1)
+        handleN n = (N n,N 0)
+        handleBin (Sum,((e1,d1),(e2,d2))) = (Bin Sum e1 e2,Bin Sum d1 d2)
+        handleBin (Product,((e1,d1),(e2,d2))) = (Bin Product e1 e2, Bin Sum (Bin Product e1 d2) (Bin Product d1 e2))
+        handleUn (Negate,(e1,d1)) = (Un Negate e1,Un Negate d1)
+        handleUn (E,(e1,d1)) = (Un E e1,Bin Product (Un E e1) d1)
 \end{code}
 
 \begin{code}
-ad_gen = undefined
+ad_gen a = either (handleX) (either (handleN) (either (handleBin a) (handleUn a)))
+  where handleX () = (X,1)
+        handleN = (split (N) (const 0)) 
+        handleBin a (Sum,((e1,d1),(e2,d2))) = (Bin Sum e1 e2,d1+d2)
+        handleBin a (Product,((e1,d1),(e2,d2))) = (Bin Product e1 e2,((eval_exp a e1)*d2) + ((eval_exp a e2)*d1))
+        handleUn a (Negate,(e1,d1)) = (Un Negate e1,negate d1) 
+        handleUn a (E,(e1,d1)) = (Un E e1,d1*(eval_exp a (Un E e1)))
 \end{code}
 
 \subsection*{Problema 2}
 Definir
 \begin{code}
-loop n = (2*n,(n + 1) * n)
-inic = (1,1)
-prj a = p1 a / p2 a
+
 \end{code}
-por forma a que
+Definição de uma função geral f que vai ter o resultado do numero de catalan
+De seguida utilização da funçao h como caminho para defenir os factoriais do denominador e numerador
+Em h aplicar a divisão inteira(sem certeza se deve utilizar a função "div" mas "/" não resulta)
+Função numerador calcula a (2n)!
+Função Denominador calcula um fatorial normal e depois é aplicada em n e (n+1)
 \begin{code}
+
+f 0 = 1
+f (n+1) = f n + h n
+
+h 0 = 1
+h (n+1) = h n + (div (numerador n) ((denominador n) * denominador(n+1)))
+
+numerador 0 = 0
+numerador n = numerador_aux n + numerador (n - 1)
+              where
+              numerador_aux n = n + n
+
+denominador 0 = 0
+denominador n = n * denominador (n-1)
+
 cat = prj . (for loop inic)
+  where  
+  loop (f,h,numerador,denominador) = (f + h, h + (div (numerador) ((denominador) * denominador)),numerador,denominador)
+  inic = (1,1,1,1)
+  prj (f,h,numerador,denominador) = f
+
 \end{code}
 seja a função pretendida.
 \textbf{NB}: usar divisão inteira.
