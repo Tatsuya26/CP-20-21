@@ -1077,31 +1077,25 @@ Definir
 
 \end{code}
 Definição de uma função geral f que vai ter o resultado do numero de catalan
-De seguida utilização da funçao h como caminho para defenir os factoriais do denominador e numerador
-Em h aplicar a divisão inteira(sem certeza se deve utilizar a função "div" mas "/" não resulta)
-Função numerador calcula a (2n)!
-Função Denominador calcula um fatorial normal e depois é aplicada em n e (n+1)
+Como Catalan(n+1) = 4*(n) + 2 * C(n) / n+2, podemos definir uma funçao h que calcula o C(n)
+Depois precisamos da funçao mysucc para definir as funçoes todas recursivamente e seguir o pricipio da recursivadade mutua.
+Na funçao cat, mantemos o numero de Catalan na primeira componente logo a funçao proj vai buscar essa mesma primeira componente
 \begin{code}
 
 f 0 = 1
-f (n+1) = f n + h n
+f (n+1) = div (((4*(mysucc(n)-1))+2) * h n) (mysucc (n) + 1)
 
 h 0 = 1
-h (n+1) = h n + (div (numerador n) ((denominador n) * denominador(n+1)))
+h (n+1) = div (fac (2*mysucc n)) (fac (mysucc n) * fac (succ(mysucc n))) 
 
-numerador 0 = 0
-numerador n = numerador_aux n + numerador (n - 1)
-              where
-              numerador_aux n = n + n
+mysucc 0 = 1
+mysucc (n+1) = 1 + mysucc n
 
-denominador 0 = 0
-denominador n = n * denominador (n-1)
-
-cat = prj . (for loop inic)
+cat = prj . (for loop inic) 
   where  
-  loop (f,h,numerador,denominador) = (f + h, h + (div (numerador) ((denominador) * denominador)),numerador,denominador)
-  inic = (1,1,1,1)
-  prj (f,h,numerador,denominador) = f
+  inic = (1,1,1)
+  loop (f,h,mysucc) = (div (((4*(mysucc-1))+2) * h) (mysucc + 1),div (fac (2*mysucc)) (fac (mysucc) * fac(mysucc + 1)),1+mysucc)
+  prj (f,h,n) = f
 
 \end{code}
 seja a função pretendida.
