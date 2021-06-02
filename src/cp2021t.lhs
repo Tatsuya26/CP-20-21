@@ -843,7 +843,7 @@ Função auxiliar:
 \begin{spec}
 calcLine :: NPoint -> (NPoint -> OverTime NPoint)
 calcLine [] = const nil
-calcLine(p:x) = curry g p (calcLine x) where
+calcLine (p:x) = curry g p (calcLine x) where
    g :: (Rational, NPoint -> OverTime NPoint) -> (NPoint -> OverTime NPoint)
    g (d,f) l = case l of
        []     -> nil
@@ -1107,7 +1107,11 @@ Apresentar de seguida a justificação da solução encontrada.
 \begin{code}
 calcLine :: NPoint -> (NPoint -> OverTime NPoint)
 calcLine = cataList h where
-   h = undefined
+    h (Left a) = const nil
+    h (Right (a,x)) = g (a,x)
+    g (d,f) l = case l of
+       []     -> nil
+       (x:xs) -> \z -> concat $ (sequenceA [singl . linear1d d x, f xs]) z
 
 deCasteljau :: [NPoint] -> OverTime NPoint
 deCasteljau = hyloAlgForm alg coalg where
