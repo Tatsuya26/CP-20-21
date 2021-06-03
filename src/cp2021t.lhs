@@ -1114,11 +1114,19 @@ calcLine = cataList h where
        (x:xs) -> \z -> concat $ (sequenceA [singl . linear1d d x, f xs]) z
 
 deCasteljau :: [NPoint] -> OverTime NPoint
-deCasteljau = hyloAlgForm alg coalg where
-   coalg = undefined
-   alg = undefined
+deCasteljau = hyloAlgForm alg coalg
+    where
+    coalg = anaBTree (divide . outList) 
+    divide (Left a) = Left ()
+    divide (Right (a,l)) = Right (a,(init (cons(a,l)),tail (cons(a,l))))
+    alg = cataBTree (calc)
+    calc (Left a) = nil
+    calc (Right (a,(o1,o2))) = \pt -> (calcLine (o1 pt) (o2 pt)) pt
 
-hyloAlgForm = undefined
+
+hyloAlgForm f g= f . g 
+
+
 \end{code}
 
 \subsection*{Problema 4}
