@@ -1034,6 +1034,7 @@ g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
                 binOp (Product,(e,d)) = e*d
                 unOp  (Negate,n) =  n * (-1)
                 unOp  (E,n) = Prelude.exp n
+
 ---
 clean (Bin Sum (exp1) (exp2)) 
     |exp1 == (N 0) = clean exp2
@@ -1093,7 +1094,7 @@ mysucc (n+1) = 1 + mysucc n
 cat = prj . (for loop inic) 
   where  
   inic = (1,1,1)
-  loop (f,h,mysucc) = (div (((4*(mysucc-1))+2) * h) (mysucc + 1),div (fac (2*mysucc)) (fac (mysucc) * fac(mysucc + 1)),1+mysucc)
+  loop (f,h,mysucc) = (div (((4*(mysucc-1))+2) * h) (mysucc + 1), div (fac (2*mysucc)) (fac (mysucc) * fac(mysucc + 1)), 1+mysucc)
   prj (f,h,n) = f
 
 \end{code}
@@ -1136,12 +1137,24 @@ avg = p1.avg_aux
 \end{code}
 
 \begin{code}
-avg_aux = undefined
+avg_aux = cataList gene
+          where gene = either init work
+                init = split (const 0) (const 0)
+                work = split new_avg length
+                new_avg = uncurry (/) . (uncurry (+) >< succ) . (split (id >< uncurry (*)) (p2 . p2))
+                length = succ . p2 . p2
+                
+                
 \end{code}
 Solução para árvores de tipo \LTree:
 \begin{code}
-avgLTree = p1.cataLTree gene where
-   gene = undefined
+avgLTree = p1 . cataLTree gene
+           where gene = either init work
+                 init = split id (const 1)
+                 work = split new_avg contaNodos
+                 new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . ((uncurry (*) >< uncurry (*)) >< (id >< id)) . (split (id) (p2 >< p2))
+                 contaNodos = uncurry (+) . (split (p2 . p1) (p2 . p2))
+
 \end{code}
 
 \subsection*{Problema 5}
