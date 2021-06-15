@@ -1241,10 +1241,38 @@ hyloAlgForm f g= f . g
 
 \subsection*{Problema 4}
 
+Aqui está a abstração do diagrama que seria usado para calcular a média de uma lista:
+
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |A*|
-           \ar[d]_-{length}
+           \ar[d]_-{|avg|}
+&
+    |1 + (A >< A*)|
+           \ar[d]^{|id + (id >< avg)|}
+           \ar[l]_-{|inNat|}
+\\
+     |Double|
+&
+     |1 + (A >< Double)|
+           \ar[l]^-{|[zero, g2]|}
+}
+\end{eqnarray*}
+
+g2 corresponde ao algoritmo para o cálculo da média quando se adiciona um novo elemento.
+
+Então, se g2 recebesse o elemento a inserir e uma lista (não vazia), exprimia-se assim:
+
+\begin{quote}
+  $g2 \ x \ l = \frac{x+k * avg\ l}{k+1}$ para $k=length\ l$
+\end{quote}
+
+Portanto, avg depende do tamanho da lista. Para calculá-lo, vamos usar o catamorfismo de length.
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |A*|
+           \ar[d]_-{|length|}
 &
     |1 + (A >< A*)|
            \ar[d]^{|id + (id >< length)|}
@@ -1257,36 +1285,62 @@ hyloAlgForm f g= f . g
 }
 \end{eqnarray*}
 
-\begin{eqnarray*}
-\xymatrix@@C=2cm{
-    |A*|
-           \ar[d]_-{|avg|}
-&
-    |1 + (A >< A*)|
-           \ar[d]^{|id + (id >< avg)|}
-           \ar[l]_-{|inNat|}
-\\
-     |(Double >< Nat0)|
-&
-     |1 + (A >< (Double >< Nat0))|
-           \ar[l]^-{|g|}
-}
-\end{eqnarray*}
+Assim, para calcular a média, temos um split de catamorfismos (|avg_aux = split avg length|) e no final basta retirar o valor que queremos
 
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |A*|
-           \ar[d]_-{|cataNat g|}
+           \ar[d]_-{|avg_aux|}
 &
     |1 + (A >< A*)|
-           \ar[d]^{|id + (cataNat g)|}
+           \ar[d]^{|id + (id + avg_aux)|}
            \ar[l]_-{|inNat|}
 \\
      |(Double >< Nat0)|
 &
      |1 + (A >< (Double >< Nat0))|
-           \ar[l]^-{|g|}
+           \ar[l]^-{|[init, work]|}
 }
+\end{eqnarray*}
+
+A função init acontece no caso de lista vazia. Nesse caso, a média e o comprimento da lista é 0. Logo:
+\begin{eqnarray*}
+\start
+  |init = split zero zero|
+\qed
+\end{eqnarray*}
+
+A função work é um split dos genes de avg e length, ligeiramente modificados pois recebem e retornam tipos diferentes. Logo:
+\begin{eqnarray*}
+\start
+  |length (a, (avg, l)) = l + 1|
+%
+\just\equiv{ def. succ, def. p2 }
+%
+  |length (a, (avg, l)) = succ . p2 . p2 (a, (avg, l)|
+\just\equiv{ igualdade extensional }
+%
+  |length = succ . p2 . p2|
+\qed
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\start
+  |new_avg (a, (avg, l)) = (a + l * avg) / (l + 1)|
+%
+\just\equiv{ def. succ, def. uncurry }
+%
+  |new_avg (a, (avg, l)) = (uncurry (/)) (a + l * avg, succ l)|
+\just\equiv{ def. uncurry, def |><| }
+%
+  |new_avg (a, (avg, l)) = (uncurry (/)) . (uncurry (+) >< succ) ((a, l * avg), l)|
+\just\equiv{ def split, def. id, def. uncurry, def. p2 }
+%
+  |new_avg (a, (avg, l)) = (uncurry (/)) . (uncurry (+) >< succ) . (split (id >< uncurry (*)) (p2 . p2)) (a, (avg, l))|
+\just\equiv{ igualdade extensional }
+%
+  |new_avg = uncurry (/) . (uncurry (+) >< succ) . (split (id >< uncurry (*)) (p2 . p2))|
+\qed
 \end{eqnarray*}
 
 
@@ -1305,13 +1359,97 @@ avg_aux = cataList gene
                 
                 
 \end{code}
+
+
+
 Solução para árvores de tipo \LTree:
+
+O exercício anterior feito com \LTree, geraria um diagrama tal como este:
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |LTree A|
+           \ar[d]_-{|avg_aux|}
+&
+    |A + (LTree A >< LTree A)|
+           \ar[d]^{|id + (avg_aux + avg_aux)|}
+           \ar[l]_-{|inNat|}
+\\
+     |(Double >< Nat0)|
+&
+     |A + ((Double >< Nat0) >< (Double >< Nat0))|
+           \ar[l]^-{|[init, work]|}
+}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+|avg_aux = cataLTree [init, work]|
+\end{eqnarray*}
+
+A função init neste caso tem um comportamento diferente, pois não recebe um elemento nulo.
+
+Ao calcular a média, devolve o valor do próprio elemento, porque a média de um só elemento, é ele próprio.
+
+Ao calcular o nº de nodos (equivalente de length para \LTree) devolve 1 em vez de 0, porque de facto, tem um elemento. Logo:
+\begin{eqnarray*}
+\start
+  |init = split id (const 1))|
+\qed
+\end{eqnarray*}
+
+Agora falta apenas deduzir como calcular a média e como calcular o equivalente de length para \LTree.
+
+\begin{eqnarray*}
+\start
+  |contaNodos ((a1, l1), (a2, l2)) = l1 + l2|
+%
+\just\equiv{ def. uncurry }
+%
+  |contaNodos ((a1, l1), (a2, l2)) = (uncurry (+)) (l1, l2))|
+\just\equiv{ def. split, def. p1, def. p2 }
+%
+  |contaNodos ((a1, l1), (a2, l2)) = uncurry (+) . (split (p2 . p1) (p2 . p2)) ((a1, l1), (a2, l2))|
+\just\equiv{ igualdade extensional }
+%
+  |contaNodos = uncurry (+) . (split (p2 . p1) (p2 . p2))|
+\qed
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\start
+  |new_avg (((a1, l1), (a2, l2)) = ((a1 * l1) + (a2 * l2)) / (l1 + l2)|
+%
+\just\equiv{ def. uncurry }
+%
+  |new_avg (((a1, l1), (a2, l2)) = (uncurry (/)) ((a1 * l1) + (a2 * l2), l1 + l2)|
+\just\equiv{ def. uncurry, def. >< }
+%
+  |new_avg (((a1, l1), (a2, l2)) = (uncurry (/)) . (uncurry (+) >< uncurry (+)) ((a1 * l1, a2 * l2), (l1, l2))|
+\just\equiv{ def. ><, def. uncurry, def. id }
+%
+|new_avg (((a1, l1), (a2, l2)) = (uncurry (/)) . (uncurry (+) >< uncurry (+)) . ((uncurry (*) >< uncurry (*)) >< (id >< id)) (((a1, l2),(a1, l2)), (l1, l2))|
+  \just\equiv{ def. split, def. id, def. uncurry, def. p2 }
+%
+  |new_avg (((a1, l1), (a2, l2)) = uncurry (/) . (uncurry (+) >< uncurry (+)) . ((uncurry (*) >< uncurry (*)) >< (id >< id)) . (split (id) (p2 >< p2)) (((a1, l1), (a2, l2))|
+\just\equiv{ igualdade extensional }
+%
+  |new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . ((uncurry (*) >< uncurry (*)) >< (id >< id)) . (split (id) (p2 >< p2))|
+\just\equiv{ absorção |><|, natural id }
+%
+  |new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . (split (uncurry (*) >< uncurry (*)) ((id >< id) . (p2 >< p2))|
+\just\equiv{ functor |><|, natural id }
+%
+  |new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . (split (uncurry (*) >< uncurry (*)) (p2 >< p2))|
+\qed
+\end{eqnarray*}
+
+
 \begin{code}
 avgLTree = p1 . cataLTree gene
            where gene = either init work
                  init = split id (const 1)
                  work = split new_avg contaNodos
-                 new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . ((uncurry (*) >< uncurry (*)) >< (id >< id)) . (split (id) (p2 >< p2))
+                 new_avg = uncurry (/) . (uncurry (+) >< uncurry (+)) . (split (uncurry (*) >< uncurry (*)) (p2 >< p2))
                  contaNodos = uncurry (+) . (split (p2 . p1) (p2 . p2))
 
 \end{code}
