@@ -1020,6 +1020,7 @@ ad v = p2 . cataExpAr (ad_gen v)
 \end{code}
 Definir:
 
+
 \begin{code}
 outExpAr :: ExpAr a -> Either () (Either a (Either (BinOp, (ExpAr a, ExpAr a)) (UnOp, ExpAr a)))
 outExpAr X = i1 ()
@@ -1131,6 +1132,55 @@ hyloAlgForm f g= f . g
 
 \subsection*{Problema 4}
 
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |A*|
+           \ar[d]_-{length}
+&
+    |1 + (A >< A*)|
+           \ar[d]^{|id + (id >< length)|}
+           \ar[l]_-{|inNat|}
+\\
+     |Nat0|
+&
+     |1 + (A >< Nat0))|
+           \ar[l]^-{[zero, succ . p2]}
+}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |A*|
+           \ar[d]_-{|avg|}
+&
+    |1 + (A >< A*)|
+           \ar[d]^{|id + (id >< avg)|}
+           \ar[l]_-{|inNat|}
+\\
+     |(Double >< Nat0)|
+&
+     |1 + (A >< (Double >< Nat0))|
+           \ar[l]^-{|g|}
+}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |A*|
+           \ar[d]_-{|cataNat g|}
+&
+    |1 + (A >< A*)|
+           \ar[d]^{|id + (cataNat g)|}
+           \ar[l]_-{|inNat|}
+\\
+     |(Double >< Nat0)|
+&
+     |1 + (A >< (Double >< Nat0))|
+           \ar[l]^-{|g|}
+}
+\end{eqnarray*}
+
+
 Solução para listas não vazias:
 \begin{code}
 avg = p1.avg_aux
@@ -1161,6 +1211,7 @@ avgLTree = p1 . cataLTree gene
 Inserir em baixo o código \Fsharp\ desenvolvido, entre \verb!\begin{verbatim}! e \verb!\end{verbatim}!:
 
 \begin{verbatim}
+
 \end{verbatim}
 
 %----------------- Fim do anexo com soluções dos alunos ------------------------%

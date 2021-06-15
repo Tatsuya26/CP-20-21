@@ -12,6 +12,8 @@ open Cp
 
 type LTree<'a> = Leaf of 'a | Fork of LTree<'a> * LTree<'a>
 
+type BTree<'a> = Empty | Node of 'a * LTree<'a> * LTree<'a>
+
 let inLTree x = either Leaf Fork x
 
 let outLTree x =
