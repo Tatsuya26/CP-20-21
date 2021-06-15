@@ -1168,7 +1168,7 @@ Apresentar de seguida a justificação da solução encontrada.\\
 Definição de uma função catNumber que vai calcular o resultado do numero de catalan.\\
 Como \begin {eqnarray} C_(n+1) = \frac{(4*n + 2) * C_n}{n+2} \end{eqnarray}, não vamos precisar de recorrer a factoriais.
 Assim recorremos a recursividade mutua a partir da funçao mysucc para sabermos o valor de n.
-Na funçao cat, faremos um for loop onde mantemos o numero de Catalan na primeira componente. Assim a função proj só tem de ir buscar a primeira componente do par.
+Na funçao cat, faremos um for loop onde mantemos o numero de Catalan na primeira componente. Neste sentido, a função proj apenas tem de devolver a primeira componente do par.
 
 \subsection*{Problema 3}
 
