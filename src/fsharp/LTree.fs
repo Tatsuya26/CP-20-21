@@ -12,9 +12,16 @@ open Cp
 
 type LTree<'a> = Leaf of 'a | Fork of LTree<'a> * LTree<'a>
 
-type BTree<'a> = Empty | Node of 'a * LTree<'a> * LTree<'a>
+type BTree<'a> = Empty | Node of 'a * BTree<'a> * BTree<'a>
+
+let inBTree x = either (konst 0) Node x
 
 let inLTree x = either Leaf Fork x
+
+let outBTree x =
+     match x with
+     | Empty -> i1 ()
+     | Node (a, e, d) -> i2 (a, e, d)
 
 let outLTree x =
      match x with

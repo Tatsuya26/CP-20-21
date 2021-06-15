@@ -1490,7 +1490,14 @@ avgLTree = p1 . cataLTree gene
 Inserir em baixo o código \Fsharp\ desenvolvido, entre \verb!\begin{verbatim}! e \verb!\end{verbatim}!:
 
 \begin{verbatim}
+type BTree<'a> = Empty | Node of 'a * BTree<'a> * BTree<'a>
 
+let inBTree x = either (konst 0) Node x
+
+let outBTree x =
+     match x with
+     | Empty -> i1 ()
+     | Node (a, e, d) -> i2 (a, e, d)
 \end{verbatim}
 
 %----------------- Fim do anexo com soluções dos alunos ------------------------%
