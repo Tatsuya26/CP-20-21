@@ -127,7 +127,7 @@
 
 \begin{center}\large
 \begin{tabular}{ll}
-\textbf{Grupo} nr. & 999 (preencher)
+\textbf{Grupo} nr. & 72
 \\\hline
 a93274 & David Pereira Alves	
 \\
@@ -1019,7 +1019,7 @@ ad v = p2 . cataExpAr (ad_gen v)
 \end{code}
 Definir:
 
-
+Função out do tipo ExpAr
 \begin{code}
 outExpAr :: ExpAr a -> Either () (Either a (Either (BinOp, (ExpAr a, ExpAr a)) (UnOp, ExpAr a)))
 outExpAr X = i1 ()
@@ -1027,18 +1027,19 @@ outExpAr (N a) = i2 (i1 a)
 outExpAr (Bin op (exp1) (exp2) ) = i2 (i2 (i1 (op, (exp1, exp2 ))))
 outExpAr (Un op (exp)) = i2 (i2 (curry i2 op exp))
 ---
+\end{code}
+
+Função que define o functor do tipo ExpAr
+\begin{code}
 recExpAr f = baseExpAr id id id f f id f
 ---
-g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
-          where binOp (Sum,(e,d)) = e+d
-                binOp (Product,(e,d)) = e*d
-                unOp  (Negate,n) =  n * (-1)
-                unOp  (E,n) = Prelude.exp n
 \end{code}
+
+Funçao que descreve o gene de um catamorfismo que calcula o valor de uma expressão.
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |ExpAr a|
-           \ar[d]_-{|cataExprAr g_eval_exp|}
+           \ar[d]_-{|cataExpAr g_eval_exp|}
            \ar[r]_-{|outExpAr|}
 &
     |1 + a + X >< (ExpAr a >< ExpAr a) + Y >< ExpAr a|
@@ -1050,8 +1051,33 @@ g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
            \ar[l]^-{|g_eval_exp|}
 }
 \end{eqnarray*}
-
+\begin{code}
+g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
+          where binOp (Sum,(e,d)) = e+d
+                binOp (Product,(e,d)) = e*d
+                unOp  (Negate,n) =  n * (-1)
+                unOp  (E,n) = Prelude.exp n
 ---
+\end{code}
+
+Função que simplica uma ExpAr tirando proveito dos elementos absorventes e neutros das operações.
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |ExpAr a|
+           \ar[d]_-{|anaExpAr clean|}
+           \ar[r]_-{|clean|}
+&
+    |1 + a + X >< (ExpAr a >< ExpAr a) + Y >< ExpAr a|
+           \ar[d]^{|recExpAr (clean)|}
+\\
+     |ExpAr a|
+&
+     |1 + a + X >< (ExpAr a >< ExpAr a) + Y >< ExpAr a|
+           \ar[l]^-{|inExpAr|}
+}
+\end{eqnarray*}
+
 \begin{code}
 clean (Bin Sum (exp1) (exp2)) 
     |exp1 == (N 0) = clean exp2
@@ -1064,25 +1090,10 @@ clean (Un E exp)
     |exp == (N 0) = i2 (i1 1)
 clean exp = outExpAr exp
 ---
-gopt a = g_eval_exp a
-
 \end{code}
 
-\begin{eqnarray*}
-\xymatrix@@C=2cm{
-    |ExpAr a|
-           \ar[d]_-{|anaExpAr clean|}
-           \ar[r]_-{|clean|}
-&
-    |ExpAr a|
-           \ar[d]^{|recExpAr (clean)|}
-\\
-     |ExpAr a|
-&
-     |ExpAr a|
-           \ar[l]^-{|inExpAr|}
-}
-\end{eqnarray*}
+Função igual ao gene do catamorfismo que calcula o valor de uma expressão definido em cima.
+
 \begin{eqnarray*}
 \xymatrix@@C=2cm{
     |ExpAr a|
@@ -1100,6 +1111,17 @@ gopt a = g_eval_exp a
 \end{eqnarray*}  
 
 \begin{code}
+gopt a = g_eval_exp a
+
+\end{code}
+
+Assim, se combinarmos o catamorfismo e o anamorfismo num hyloformismo, teremos uma versão optimizada do catamorfismo inicialmente definido.
+\begin{code}
+---
+\end{code}
+
+Função gene de um catamorfismo que vai calcular a expressão derivada da expressão fornecida.
+\begin{code}
 sd_gen :: Floating a => Either () (Either a (Either (BinOp,((ExpAr a,ExpAr a),(ExpAr a,ExpAr a))) (UnOp,(ExpAr a,ExpAr a)))) -> (ExpAr a,ExpAr a)
 sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
   where handleX () = (X,N 1)
@@ -1108,8 +1130,11 @@ sd_gen = either (handleX) (either (handleN) (either (handleBin) (handleUn)))
         handleBin (Product,((e1,d1),(e2,d2))) = (Bin Product e1 e2, Bin Sum (Bin Product e1 d2) (Bin Product d1 e2))
         handleUn (Negate,(e1,d1)) = (Un Negate e1,Un Negate d1)
         handleUn (E,(e1,d1)) = (Un E e1,Bin Product (Un E e1) d1)
+
+---
 \end{code}
 
+Função gene de um catamorfismo que vai calcular o valor da derivada da expressão num certo ponto.
 \begin{code}
 ad_gen a = either (handleX) (either (handleN) (either (handleBin a) (handleUn a)))
   where handleX () = (X,1)
@@ -1139,16 +1164,15 @@ cat = prj . (for loop inic)
 \end{code}
 seja a função pretendida.
 \textbf{NB}: usar divisão inteira.
-Apresentar de seguida a justificação da solução encontrada.
-
-Definição de uma função geral catNumber que vai ter o resultado do numero de catalan.
-Como \begin {eqnarray} C_(n+1) = \frac{(4*n + 2) * C_n}{n+2} \label{eq:cat} \end{eqnarray}, não vamos precisar de recorrer a factoriais.
-Assim recorremos a recursividade mutua a partir da funçao mysucc.
-Na funçao cat, mantemos o numero de Catalan na primeira componente logo a funçao proj vai buscar essa mesma primeira componente.
+Apresentar de seguida a justificação da solução encontrada.\\
+Definição de uma função catNumber que vai calcular o resultado do numero de catalan.\\
+Como \begin {eqnarray} C_(n+1) = \frac{(4*n + 2) * C_n}{n+2} \end{eqnarray}, não vamos precisar de recorrer a factoriais.
+Assim recorremos a recursividade mutua a partir da funçao mysucc para sabermos o valor de n.
+Na funçao cat, faremos um for loop onde mantemos o numero de Catalan na primeira componente. Assim a função proj só tem de ir buscar a primeira componente do par.
 
 \subsection*{Problema 3}
 
-
+Função calcLine definida como um catamorfismo.
 \begin{eqnarray*}
 \start
     |lcbr (
@@ -1188,7 +1212,44 @@ calcLine = cataList h where
        []     -> nil
        (x:xs) -> \z -> concat $ (sequenceA [singl . linear1d d x, f xs]) z
 \end{code}
+Funçao que define o algoritmo de deCasteljau através de um hilomorfismo.\\
+Como o algoritmo afirma, o valor da curva num ponto é calculado pela interpolação linear entre os primeiros N-1 pontos e os últimos N-1 pontos.\\
+Assim, pensando numa estratégia do tipo divide and conquer, a parte do divide (anaformismo) vai criar uma árvore binária onde o valor do nó é o ponto,
+a árvore da esquerda os primeiros N-1 pontos e a árvore da direita os últimos N-1 pontos.\\
 
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |NPoint*|
+           \ar[d]_-{|anaBTree (divide . outList)|}
+           \ar[r]_-{|divide . outList|}
+&
+    |1 + NPoint >< (NPoint* >< NPoint*)|
+           \ar[d]^{|recBTree (divide . outList)|}
+\\
+     |BTree NPoint|
+&
+     |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
+           \ar[l]^-{|inBTree|}
+}
+\end{eqnarray*}
+Na parte da conquista (catamorfismo), aplicamos um catamorfismo de árvore binária onde ia calcular o valor dos pontos nas sub-árvores e , no fim,
+utilizamos a função calcLine para calcular o valor da curva no ponto.
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |BTree NPoint|
+           \ar[d]_-{|cataBTree calc|}
+           \ar[r]_-{|outBTree|}
+&
+    |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
+           \ar[d]^{|recBTree (cataBTree calc)|}
+\\
+     |NPoint -> Overtime NPoint|
+&
+     |1 + NPoint >< (Overtime NPoint >< Overtime NPoint)|
+           \ar[l]^-{|calc|}
+}
+\end{eqnarray*}
 
 \begin{code}
 deCasteljau :: [NPoint] -> OverTime NPoint
@@ -1206,37 +1267,8 @@ hyloAlgForm f g= f . g
 
 \end{code}
 
-\begin{eqnarray*}
-\xymatrix@@C=2cm{
-    |NPoint*|
-           \ar[d]_-{|anaBTree (divide . outList)|}
-           \ar[r]_-{|divide . outList|}
-&
-    |1 + NPoint >< (NPoint* >< NPoint*)|
-           \ar[d]^{|recBTree (divide . outList)|}
-\\
-     |BTree NPoint|
-&
-     |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
-           \ar[l]^-{|inBTree|}
-}
-\end{eqnarray*}
 
-\begin{eqnarray*}
-\xymatrix@@C=2cm{
-    |BTree NPoint|
-           \ar[d]_-{|cataBTree calc|}
-           \ar[r]_-{|outBTree|}
-&
-    |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
-           \ar[d]^{|recBTree (calc)|}
-\\
-     |NPoint -> Overtime NPoint|
-&
-     |1 + NPoint >< (Overtime NPoint >< Overtime NPoint)|
-           \ar[l]^-{|g_eval_exp|}
-}
-\end{eqnarray*}
+
 
 
 \subsection*{Problema 4}
