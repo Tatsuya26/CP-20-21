@@ -1012,8 +1012,7 @@ optmize_eval :: (Floating a, Eq a) => a -> (ExpAr a) -> a
 optmize_eval a = hyloExpAr (gopt a) clean
 
 sd :: Floating a => ExpAr a -> ExpAr a
---sd = p2 . cataExpAr sd_gen
-sd = undefined 
+sd = p2 . cataExpAr sd_gen 
 
 ad :: Floating a => a -> ExpAr a -> a
 ad v = p2 . cataExpAr (ad_gen v)
@@ -1035,8 +1034,25 @@ g_eval_exp a = either (const a) (either (id) (either (binOp) (unOp)))
                 binOp (Product,(e,d)) = e*d
                 unOp  (Negate,n) =  n * (-1)
                 unOp  (E,n) = Prelude.exp n
+\end{code}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |ExpAr a|
+           \ar[d]_-{|cataExprAr g_eval_exp|}
+           \ar[r]_-{|outExpAr|}
+&
+    |1 + a + X >< (ExpAr a >< ExpAr a) + Y >< ExpAr a|
+           \ar[d]^{|recExpAr (g_eval_exp)|}
+\\
+     |a|
+&
+     |1 + a + (X >< (a >< a)) + (Y >< a)|
+           \ar[l]^-{|g_eval_exp|}
+}
+\end{eqnarray*}
 
 ---
+\begin{code}
 clean (Bin Sum (exp1) (exp2)) 
     |exp1 == (N 0) = clean exp2
     |exp2 == (N 0) = clean exp1
@@ -1049,7 +1065,39 @@ clean (Un E exp)
 clean exp = outExpAr exp
 ---
 gopt a = g_eval_exp a
+
 \end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |ExpAr a|
+           \ar[d]_-{|anaExpAr clean|}
+           \ar[r]_-{|clean|}
+&
+    |ExpAr a|
+           \ar[d]^{|recExpAr (clean)|}
+\\
+     |ExpAr a|
+&
+     |ExpAr a|
+           \ar[l]^-{|inExpAr|}
+}
+\end{eqnarray*}
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |ExpAr a|
+           \ar[d]_-{|cataExprAr gopt|}
+           \ar[r]_-{|outExpAr|}
+&
+    |1 + a + X >< (ExpAr a >< ExpAr a) + Y >< ExpAr a|
+           \ar[d]^{|recExpAr (gopt)|}
+\\
+     |a|
+&
+     |1 + a + (X >< (a >< a)) + (Y >< a)|
+           \ar[l]^-{|gopt|}
+}
+\end{eqnarray*}  
 
 \begin{code}
 sd_gen :: Floating a => Either () (Either a (Either (BinOp,((ExpAr a,ExpAr a),(ExpAr a,ExpAr a))) (UnOp,(ExpAr a,ExpAr a)))) -> (ExpAr a,ExpAr a)
@@ -1076,34 +1124,60 @@ ad_gen a = either (handleX) (either (handleN) (either (handleBin a) (handleUn a)
 Definir
 \begin{code}
 
-\end{code}
-Definição de uma função geral f que vai ter o resultado do numero de catalan
-Como Catalan(n+1) = 4*(n) + 2 * C(n) / n+2, podemos definir uma funçao h que calcula o C(n)
-Depois precisamos da funçao mysucc para definir as funçoes todas recursivamente e seguir o pricipio da recursivadade mutua.
-Na funçao cat, mantemos o numero de Catalan na primeira componente logo a funçao proj vai buscar essa mesma primeira componente
-\begin{code}
-
-f 0 = 1
-f (n+1) = div (((4*(mysucc(n)-1))+2) * h n) (mysucc (n) + 1)
-
-h 0 = 1
-h (n+1) = div (fac (2*mysucc n)) (fac (mysucc n) * fac (succ(mysucc n))) 
+catNumber 0 = 1
+catNumber (n+1) = div (((4*(mysucc(n)-1))+2) * catNumber n) (mysucc (n) + 1)
 
 mysucc 0 = 1
 mysucc (n+1) = 1 + mysucc n
 
 cat = prj . (for loop inic) 
   where  
-  inic = (1,1,1)
-  loop (f,h,mysucc) = (div (((4*(mysucc-1))+2) * h) (mysucc + 1), div (fac (2*mysucc)) (fac (mysucc) * fac(mysucc + 1)), 1+mysucc)
-  prj (f,h,n) = f
+  inic = (1,1)
+  loop (f,mysucc) = (div (((4*(mysucc-1))+2) * f) (mysucc + 1), 1+mysucc)
+  prj (f,n) = f
 
 \end{code}
 seja a função pretendida.
 \textbf{NB}: usar divisão inteira.
 Apresentar de seguida a justificação da solução encontrada.
 
+Definição de uma função geral catNumber que vai ter o resultado do numero de catalan.
+Como \begin {eqnarray} C_(n+1) = \frac{(4*n + 2) * C_n}{n+2} \label{eq:cat} \end{eqnarray}, não vamos precisar de recorrer a factoriais.
+Assim recorremos a recursividade mutua a partir da funçao mysucc.
+Na funçao cat, mantemos o numero de Catalan na primeira componente logo a funçao proj vai buscar essa mesma primeira componente.
+
 \subsection*{Problema 3}
+
+
+\begin{eqnarray*}
+\start
+    |lcbr (
+    calcLine[] = const nil
+    )(
+    calcLine (p:x) = uncurry g p (calcLine x)
+    )|
+%
+\just\equiv{ def-nil,def-cons, remover variaveis }
+%
+    |lcbr(
+        calcLine . nil = const nil
+    )(
+        calcLine . cons = g. (id >< calcLine)
+    )|
+%
+\just\equiv{Eq-+,Fusao-+,def-in}
+%
+    |calcLine . in = [const nil,g.(id >< calcLine)]|
+%
+\just\equiv{Absorçao-+}
+%
+    |calcLine . in = [const nil,g] . (id + id >< calcLine)|
+%
+\just\equiv{Universal-cata}
+%
+    |calcLine = cataList ([const nil,g])|
+\qed
+\end{eqnarray*}
 
 \begin{code}
 calcLine :: NPoint -> (NPoint -> OverTime NPoint)
@@ -1113,7 +1187,10 @@ calcLine = cataList h where
     g (d,f) l = case l of
        []     -> nil
        (x:xs) -> \z -> concat $ (sequenceA [singl . linear1d d x, f xs]) z
+\end{code}
 
+
+\begin{code}
 deCasteljau :: [NPoint] -> OverTime NPoint
 deCasteljau = hyloAlgForm alg coalg
     where
@@ -1127,8 +1204,40 @@ deCasteljau = hyloAlgForm alg coalg
 
 hyloAlgForm f g= f . g 
 
-
 \end{code}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |NPoint*|
+           \ar[d]_-{|anaBTree (divide . outList)|}
+           \ar[r]_-{|divide . outList|}
+&
+    |1 + NPoint >< (NPoint* >< NPoint*)|
+           \ar[d]^{|recBTree (divide . outList)|}
+\\
+     |BTree NPoint|
+&
+     |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
+           \ar[l]^-{|inBTree|}
+}
+\end{eqnarray*}
+
+\begin{eqnarray*}
+\xymatrix@@C=2cm{
+    |BTree NPoint|
+           \ar[d]_-{|cataBTree calc|}
+           \ar[r]_-{|outBTree|}
+&
+    |1 + NPoint >< (BTree NPoint >< BTree NPoint)|
+           \ar[d]^{|recBTree (calc)|}
+\\
+     |NPoint -> Overtime NPoint|
+&
+     |1 + NPoint >< (Overtime NPoint >< Overtime NPoint)|
+           \ar[l]^-{|g_eval_exp|}
+}
+\end{eqnarray*}
+
 
 \subsection*{Problema 4}
 
